@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netflix - Seleção de Perfil</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Tela de Animação Inicial (vídeo local) -->
+    <section id="animation-screen" class="animation-screen">
+        <div class="video-container">
+            <video id="local-video" playsinline preload="auto" muted>
+                <source src="tudum.mp4" type="video/mp4">
+                Seu navegador não suporta vídeo local.
+            </video>
+
+            <!-- Overlay com logo Netflix pulsando dentro de uma tela de computador -->
+            <div id="play-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: #1a1a1a; z-index: 50;">
+                <!-- Moldura do monitor -->
+                <div style="position: relative; width: 860px; height: 520px; background: linear-gradient(145deg, #2a2a2a, #1a1a1a); border: 15px solid #333; border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center;">
+                    <div style="width: 100%; height: 100%; background: #000; display: flex; justify-content: center; align-items: center; position: relative; overflow: hidden; gap: 48px;">
+                        <!-- App Disney (esquerda) -->
+                        <button id="app-disney" class="app-icon-inside app-animated">
+                            <img src="disney.jpg" alt="Disney" style="width: 160px; height: 160px; border-radius: 12px;">
+                        </button>
+
+                        <!-- Logo Netflix (centro) -->
+                        <img id="netflix-logo" src="netflix-logo.png" alt="Netflix" style="width: 160px; height: 160px; cursor: pointer; animation: pulse 1.5s ease-in-out infinite; filter: drop-shadow(0 0 20px rgba(229, 9, 20, 0.5)); z-index: 10;">
+                        
+                        <!-- App Crunchyroll (direita) -->
+                        <button id="app-crunchyroll" class="app-icon-inside app-animated app-locked">
+                            <img src="crunchyroll.png" alt="Crunchyroll" style="width: 160px; height: 160px; border-radius: 12px;">
+                        </button>
+                        
+                        <!-- Reflexo da tela -->
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%); pointer-events: none;"></div>
+                    </div>
+                    <div style="position: absolute; bottom: -40px; width: 170px; height: 40px; background: linear-gradient(180deg, #333, #222); border-radius: 0 0 10px 10px;"></div>
+                    <div style="position: absolute; bottom: -60px; width: 220px; height: 20px; background: linear-gradient(180deg, #222, #1a1a1a); border-radius: 50%;"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tela de Seleção de Perfil -->
+    <section id="profile-screen" class="profile-screen" style="display: none;">
+        <div class="profile-container">
+            <h1 class="profile-title" id="app-profile-title">PORTFÓLIO</h1>
+            <div class="profiles">
+                <div class="profile-card" onclick="selecionarPerfil('1° semestre')">
+                    <div class="profile-avatar avatar-1">📚</div>
+                    <p class="profile-name">1° semestre</p>
+                </div>
+                <div class="profile-card" onclick="selecionarPerfil('2° semestre')">
+                    <div class="profile-avatar avatar-2">📖</div>
+                    <p class="profile-name">2° semestre</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Conteúdo Principal (inicialmente oculto) -->
+    <section id="main-content" class="main-content" style="display: none;">
+        <header class="header">
+            <div class="logo" id="app-header-title">João Eduardo | 2º Ano</div>
+            <div class="header-actions">
+                <div class="profile-selector">
+                    <button class="header-icon" id="profile-toggle" aria-label="Mudar de perfil">👤</button>
+                    <div class="profile-dropdown" id="profile-dropdown" style="display: none;">
+                        <div class="profile-option current-profile" id="current-profile-option">
+                            <span class="profile-icon" id="current-profile-icon">📚</span>
+                            <span class="profile-text" id="current-profile-text">1° semestre</span>
+                        </div>
+                        <div class="profile-divider"></div>
+                        <div class="profile-option" onclick="voltarTelaPerfs()">
+                            <span class="profile-icon">🔄</span>
+                            <span class="profile-text">Trocar de Perfil</span>
+                        </div>
+                        <div class="profile-option exit-option" onclick="sairAplicativo()">
+                            <span class="profile-icon">⏻</span>
+                            <span class="profile-text">Sair do Aplicativo</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Sobre Mim</h1>
+                <p>Em Ninjago: A Ascensão dos Dragões, novos e antigos ninjas se unem para enfrentar ameaças misteriosas enquanto os dragões retornam, desafiando a ordem do mundo e colocando toda Ninjago em risco.</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-play" onclick="abrirPaginaSerie('hero')">▶ Assistir Agora</button>
+                    <button class="btn btn-info" onclick="mostrarMaisInformacoes()">ℹ Mais Informações</button>
+                </div>
+            </div>
+            <div class="hero-image"></div>
+        </section>
+
+        <section class="content-section" id="continuar-section">
+            <h2>Continuar assistindo</h2>
+            <div class="carousel">
+                <button class="carousel-btn left" onclick="scrollCarousel(-1)">◀</button>
+                <div class="carousel-container" id="carousel"></div>
+                <button class="carousel-btn right" onclick="scrollCarousel(1)">▶</button>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>&copy; 2026 Netflix Clone. Todos os direitos reservados.</p>
+        </footer>
+    </section>
+
+    <!-- Modal de Informações -->
+    <div id="modal-info" class="modal-overlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.85); justify-content:center; align-items:center;">
+        <div class="modal-box" style="background:#2a2a2a; border-radius:8px; padding:40px; max-width:600px; width:90%; position:relative; box-shadow:0 10px 40px rgba(0,0,0,0.8);">
+            <button class="modal-close" onclick="fecharModal()">✕</button>
+            <div id="modal-content" class="modal-text">
+                <!-- Texto será inserido aqui -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Série - Netflix Clone</title>
+    <link rel="stylesheet" href="style.css">
+    <audio id="serieAudio" style="display:none;"></audio>
+    <style>
+        body { 
+            background: #000;
+            color: #fff; 
+            font-family: Arial, sans-serif; 
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            z-index: 1;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        .modal-backdrop.fade-out {
+            opacity: 0;
+        }
+
+        .modal-backdrop::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.9) 100%),
+                        linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%);
+            z-index: 2;
+        }
+
+        .modal-content {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            padding: 40px;
+            overflow-y: auto;
+            animation: fadeInSerie 0.6s ease-out;
+        }
+
+        .modal-content.fade-out {
+            animation: fadeOutSerie 0.4s ease-in forwards;
+        }
+
+        @keyframes fadeInSerie {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOutSerie {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        .modal-card {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 12px;
+            padding: 40px;
+            position: relative;
+            margin: auto;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+        }
+
+        .modal-content.fade-out .modal-card {
+            transform: translateY(10px) scale(0.985);
+            opacity: 0;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.6);
+            border: none;
+            color: #fff;
+            font-size: 28px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .close-btn:hover {
+            background: rgba(0,0,0,0.9);
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .serie-info-side {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 20px;
+        }
+
+        .serie-materia {
+            color: #fff;
+            font-size: 42px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0;
+        }
+
+        .serie-title {
+            font-size: 26px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin: 0;
+            line-height: 1.1;
+            transition: all 0.4s ease-out;
+            color: #e50914;
+        }
+
+        .serie-poster {
+            width: 100%;
+            max-width: 700px;
+            height: 400px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin: 0;
+            display: block;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            backface-visibility: hidden;
+            -webkit-font-smoothing: antialiased;
+            transition: transform 0.4s ease-out, box-shadow 0.4s ease-out;
+        }
+
+        .serie-poster:hover {
+            transform: scale(1.02);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.7);
+        }
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-badge {
+            background: #333;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin: 24px 0;
+        }
+
+        .btn-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .btn-play {
+            background: #fff;
+            color: #000;
+        }
+
+        .btn-play:hover {
+            background: rgba(255,255,255,0.8);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.08);
+        }
+
+        .btn-secondary.active {
+            background: rgba(229, 9, 20, 0.8);
+            border-color: #e50914;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(229, 9, 20, 0.6);
+        }
+
+        .btn-secondary.active:hover {
+            background: rgba(229, 9, 20, 1);
+            box-shadow: 0 0 20px rgba(229, 9, 20, 0.8);
+            transform: scale(1.1);
+        }
+
+        .episodes-section {
+            margin-top: 30px;
+            border-top: 1px solid #333;
+            padding-top: 30px;
+        }
+
+        .semester-toggle {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .semester-btn {
+            background: #222;
+            color: #fff;
+            border: 2px solid #444;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease-out;
+            font-size: 14px;
+        }
+
+        .semester-btn:hover {
+            background: #333;
+            border-color: #e50914;
+            transform: translateY(-2px);
+        }
+
+        .semester-btn.active {
+            background: #e50914;
+            border-color: #e50914;
+            transform: scale(1.05);
+        }
+
+        .episodes-container h3 {
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+
+        .about-content {
+            max-width: 720px;
+            line-height: 1.7;
+            color: rgba(255,255,255,0.82);
+        }
+
+        .about-content h3 {
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        .about-full-content {
+            max-width: none;
+        }
+
+        .about-layout {
+            display: grid;
+            grid-template-columns: minmax(280px, 0.9fr) minmax(280px, 1.1fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .about-bottom-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(280px, 400px);
+            gap: 24px;
+            align-items: start;
+            margin-top: 24px;
+        }
+
+        .about-bottom-info {
+            position: relative;
+            padding: 16px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+
+        .about-info-panel {
+            position: relative;
+        }
+
+        .about-carousel-side,
+        .about-mini-slide {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            background: #000;
+        }
+
+        .about-carousel-side {
+            height: 280px;
+        }
+
+        .about-carousel-side img,
+        .about-mini-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .about-bio {
+            color: #ccc;
+            font-size: 18px;
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        .about-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 18px;
+        }
+
+        .about-toggle {
+            flex: 1 1 0;
+            background: rgba(229, 9, 20, 0.18);
+            border: 1px solid rgba(229, 9, 20, 0.55);
+            color: #fff;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .about-toggle:hover,
+        .about-toggle.active {
+            background: #e50914;
+        }
+
+        .about-list {
+            display: none;
+            z-index: 5;
+            list-style: none;
+            margin: 12px 0 0;
+            padding: 12px 18px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            color: #ddd;
+            line-height: 1.6;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+        }
+
+        .about-list.visible {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px 10px;
+            animation: aboutListIn 0.3s ease-out;
+        }
+
+        .about-list li {
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.06);
+            border-left: 3px solid rgba(229, 9, 20, 0.45);
+            border-radius: 4px;
+            transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+        }
+
+        .about-list li + li {
+            margin-top: 0;
+        }
+
+        .about-list li:hover {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #e50914;
+            transform: translateX(3px);
+        }
+
+        .about-list li:last-child:nth-child(odd) {
+            grid-column: 1 / -1;
+            justify-self: center;
+            width: calc(50% - 5px);
+        }
+
+        @keyframes aboutListIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .about-mini-slide {
+            width: min(400px, 100%);
+            aspect-ratio: 16 / 9;
+            height: auto;
+            margin: 0;
+        }
+
+        .about-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 34px;
+            height: 34px;
+            border: 0;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.65);
+            color: #fff;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .about-arrow.prev { left: 10px; }
+        .about-arrow.next { right: 10px; }
+
+        .about-gallery {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin: 22px 0;
+        }
+
+        .about-gallery img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .about-columns {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        .about-columns strong {
+            display: block;
+            color: #e50914;
+            margin-bottom: 8px;
+        }
+
+        .about-columns ul {
+            padding-left: 18px;
+            color: rgba(255,255,255,0.82);
+        }
+
+        @media (max-width: 768px) {
+            .about-gallery,
+            .about-columns {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .about-controls {
+                flex-direction: column;
+            }
+
+            .about-list.visible {
+                grid-template-columns: 1fr;
+            }
+
+            .about-list li:last-child:nth-child(odd) {
+                grid-column: auto;
+                width: 100%;
+            }
+        }
+
+        .episodes {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .episodes li {
+            display: flex;
+            gap: 28px;
+            padding: 32px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #333;
+            border-bottom: none;
+            align-items: flex-start;
+            transition: all 0.3s ease-out;
+        }
+
+        .episodes li:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateX(8px);
+        }
+
+        .episodes li:last-child {
+            border-bottom: 1px solid #333;
+            border-radius: 0 0 6px 6px;
+        }
+
+        .episodes li:first-child {
+            border-radius: 6px 6px 0 0;
+        }
+
+        .ep-thumbnail {
+            width: 360px;
+            height: 203px;
+            background: #000;
+            border-radius: 4px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            font-size: 15px;
+            transition: all 0.3s ease-out;
+            overflow: hidden;
+        }
+
+        .ep-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .ep-carousel {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .ep-slide {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0;
+            transition: opacity 0.45s ease;
+        }
+
+        .ep-slide video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .ep-slide.rotate-left {
+            background-size: contain;
+            transform: rotate(-90deg) scale(1.55);
+            transform-origin: center;
+        }
+
+        .ep-slide.active {
+            opacity: 1;
+        }
+
+        .ep-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            background: rgba(0, 0, 0, 0.45);
+            color: #fff;
+            cursor: pointer;
+            z-index: 3;
+            display: grid;
+            place-items: center;
+            font-size: 18px;
+            line-height: 1;
+            backdrop-filter: blur(4px);
+            transition: all 0.25s ease;
+        }
+
+        .ep-arrow:hover {
+            background: rgba(229, 9, 20, 0.85);
+            border-color: rgba(229, 9, 20, 0.95);
+            transform: translateY(-50%) scale(1.08);
+        }
+
+        .ep-arrow.prev {
+            left: 10px;
+        }
+
+        .ep-arrow.next {
+            right: 10px;
+        }
+
+        body.theme-disney .serie-materia,
+        body.theme-disney .serie-title,
+        body.theme-disney .about-banner h2 {
+            color: #0f7bf5;
+        }
+
+        body.theme-disney .semester-btn:hover,
+        body.theme-disney .semester-btn.active,
+        body.theme-disney .about-toggle.active {
+            background: #0f7bf5;
+            border-color: #0f7bf5;
+        }
+
+        body.theme-disney .about-toggle {
+            border-color: rgba(15, 123, 245, 0.55);
+            background: rgba(15, 123, 245, 0.18);
+        }
+
+        body.theme-disney .about-list li {
+            border-left-color: rgba(15, 123, 245, 0.45);
+        }
+
+        body.theme-disney .about-list li:hover {
+            border-left-color: #0f7bf5;
+        }
+
+        body.theme-disney .btn-secondary:hover,
+        body.theme-disney .ep-arrow:hover {
+            background: rgba(15, 123, 245, 0.85);
+            border-color: #0f7bf5;
+        }
+
+        body.theme-disney .episodes li:hover .ep-thumbnail {
+            box-shadow: 0 8px 25px rgba(15, 123, 245, 0.3);
+        }
+
+        .episodes li:hover .ep-thumbnail {
+            box-shadow: 0 8px 25px rgba(229, 9, 20, 0.3);
+            transform: none;
+        }
+
+        .ep-content {
+            flex: 1;
+        }
+
+        .ep-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .ep-title {
+            font-weight: 600;
+            font-size: 22px;
+        }
+
+        .ep-duration {
+            color: #999;
+            font-size: 18px;
+        }
+
+        .ep-desc {
+            color: #999;
+            font-size: 18px;
+            line-height: 1.6;
+            margin-top: 10px;
+            text-align: justify;
+            text-indent: 1.5em;
+        }
+
+        @media (max-width: 768px) {
+            .modal-content { padding: 20px; }
+            .modal-card { padding: 20px; }
+            .serie-title { font-size: 36px; }
+            .episodes li { flex-direction: column; gap: 12px; }
+            .ep-thumbnail { width: 100%; height: 160px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="backdrop" class="modal-backdrop"></div>
+    
+    <div class="modal-content" id="serieContent">
+        <div class="modal-card">
+            <button class="close-btn" onclick="fecharSerie()">✕</button>
+            
+            <div class="modal-header">
+                <img id="seriesPoster" class="serie-poster" alt="Série" src="">
+                <div class="serie-info-side">
+                    <div class="serie-materia" id="materiaDisplay"></div>
+                    <h1 class="serie-title" id="titleDisplay"></h1>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-action btn-play">▶ Continuar Assistindo</button>
+                <button class="btn-action btn-secondary" id="btnAdicionar" onclick="toggleBtnAdicionar()">✓</button>
+                <button class="btn-action btn-secondary" id="btnGostei" onclick="toggleBtnGostei()">👍</button>
+            </div>
+
+            <div class="episodes-section">
+                <div id="semester-selector" class="semester-toggle" style="display:none;">
+                    <button class="semester-btn active" onclick="trocarSemestre(1)">1° Unidade</button>
+                    <button class="semester-btn" onclick="trocarSemestre(2)">2° Unidade</button>
+                </div>
+                <div id="episodiosContainer"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        let semestreAtual = 1;
+        const semestreSelecionado = localStorage.getItem('portfolio-semestre') || '1';
+        const unidadesDoSemestre = semestreSelecionado === '2' ? [3, 4] : [1, 2];
+        let serieAtual = null;
+        let btnAdicionarAtivo = false;
+        let btnGosteiAtivo = false;
+        let fechandoSerie = false;
+
+        function toggleBtnAdicionar() {
+            btnAdicionarAtivo = !btnAdicionarAtivo;
+            const btn = document.getElementById('btnAdicionar');
+            btn.classList.toggle('active', btnAdicionarAtivo);
+        }
+
+        function toggleBtnGostei() {
+            btnGosteiAtivo = !btnGosteiAtivo;
+            const btn = document.getElementById('btnGostei');
+            btn.classList.toggle('active', btnGosteiAtivo);
+        }
+
+        function fecharSerie() {
+            if (fechandoSerie) return;
+            fechandoSerie = true;
+
+            const audio = document.getElementById('serieAudio');
+            const content = document.getElementById('serieContent');
+            const backdrop = document.getElementById('backdrop');
+
+            if (content) {
+                content.classList.add('fade-out');
+            }
+
+            if (backdrop) {
+                backdrop.classList.add('fade-out');
+            }
+
+            if (audio && !audio.paused) {
+                const initialVolume = audio.volume;
+                const fadeMs = 360;
+                const steps = 12;
+                const stepMs = Math.floor(fadeMs / steps);
+                let step = 0;
+
+                const fadeTimer = setInterval(() => {
+                    step += 1;
+                    const factor = Math.max(0, 1 - step / steps);
+                    audio.volume = initialVolume * factor;
+
+                    if (step >= steps) {
+                        clearInterval(fadeTimer);
+                        audio.pause();
+                        audio.volume = initialVolume;
+                    }
+                }, stepMs);
+            } else if (audio) {
+                audio.pause();
+            }
+
+            setTimeout(() => {
+                window.location.href = 'index.html#continuar-section';
+            }, 420);
+        }
+
+        const seriesData = {
+            hero: {
+                seriesName: 'Sobre Mim',
+                materia: 'Portfólio',
+                description: 'Neste espaço apresento meu percurso, minhas aprendizagens e os projetos desenvolvidos ao longo do ano letivo.',
+                image: 'ninjago.jpg',
+                audioFile: 'sobre mim.mpeg',
+                startTime: 102,
+                endTime: 159,
+                fadeTransition: true,
+                fadeDuration: 3,
+                volume: 0.35
+            },
+            0: {
+                seriesName: 'Carmen Sandiego',
+                materia: 'Ciências Humanas',
+                description: 'Explorações culturais e históricas com Carmen Sandiego.',
+                image: 'carmensandiego.webp',
+                audioFile: 'ciencias-humanas.mp3',
+                endTime: 48,
+                volume: 0.8,
+                semestres: {
+                    1: { name: 'Temporada 1', episodes: [
+                        {
+                            name: 'Ep.1: O mito da independência',
+                            duration: '23 min',
+                            desc: 'Neste projeto proposto por Victor, nós fizemos uma pequena apresentação sobre o mito da independência do Brasil, na realidade e no mito. Desenvolvemos a criatividade e o trabalho em equipe, além de enfrentar uma corrida contra o tempo.',
+                            mediaSlides: [
+                                { type: 'video', src: 'ep 1 temp 1 C.H.mp4', muted: true, rate: 1.5 },
+                                { type: 'image', src: 'ciencias-humanas-temp1.jpg' },
+                                { type: 'image', src: 'ep 1 temp 1 C.H.jpeg' },
+                                { type: 'image', src: 'Temp 1 ep 1 C.H.jpeg' }
+                            ],
+                            thumbPosition: 'center 28%',
+                            thumbSize: 'cover',
+                            autoSlideMs: 3000
+                        },
+                        { name: 'Ep.2: A influência Portuguesa No Brasil', duration: '24 min', desc: 'Nessa peça teatral proposta por Janaína, a gente fez uma encenação da chegada dos portugueses no Brasil e de como funcionou a colonização. Pudemos desenvolver as habilidades de criatividade e de caracterização do personagem.', thumb: 'ep 2 temp 1 C.H.webp', thumbPosition: 'center', thumbSize: 'cover' }
+                    ]},
+                    2: { name: 'Temporada 2', episodes: [
+                        { name: 'Ep.1: Pesquisa socioeconômica', duration: '22 min', desc: 'Na pesquisa proposta por Janaína, entrevistamos 25 pessoas de diferentes funções e cargos no SESI Cabo. Foi uma experiência diferente do que eu já tinha feito na escola, e desenvolvi comunicação e a habilidade de ouvir o próximo.', mediaSlides: [{ type: 'video', src: 'Ep 1 temp 2 Ciencias Humanas.mp4', muted: true }], autoSlideMs: 3000 },
+                        { name: 'Ep.2: Pré-orgulho', duration: '23 min', desc: 'Neste pré-orgulho organizado por Janaína, fizemos uma preparação para o orgulho baseada na história do Cabo. Exploramos mais sobre nossas origens, o trabalho em grupo e a criatividade.', mediaSlides: [{ type: 'image', src: 'Ep 2 temp 2 Ciencias Humanas- 2.jpeg' }], autoSlideMs: 3000 }
+                    ]},
+                    3: { name: 'Temporada 3', episodes: [
+                        {
+                            name: 'Ep.1: Orgulho de Ser SESI',
+                            duration: '23 min',
+                            desc: 'Neste projeto, a escola nos propôs uma apresentação sobre a história do Cabo. Trabalhamos em equipe com criatividade, unindo uma peça teatral e um escape room, aprendendo sobre o passado da cidade de um jeito interativo e divertido.',
+                            mediaSlides: [
+                                { type: 'video', src: 'Orgulho de Ser SESI- Ep 1 temp 3- Humanas (2).mp4', muted: true },
+                                { type: 'video', src: 'Orgulho de Ser SESI- Ep 1 temp 3- Humanas (1).mp4', muted: true },
+                                { type: 'video', src: 'Orgulho de Ser SESI- Ep 1 temp 3- Humanas (3).mp4', muted: true }
+                            ],
+                            thumbPosition: 'center',
+                            thumbSize: 'cover',
+                            autoSlideMs: 3000
+                        }
+                        ,
+                        { name: 'Ep.2: Geopolítica Africana', duration: '23 min', desc: 'Nesse seminário, Janaína pediu que falássemos sobre a geopolítica do continente africano. Nos caracterizamos e mostramos a realidade da região, quebrando preconceitos e desenvolvendo senso crítico sobre o que pensamos da África.', mediaSlides: [{ type: 'video', src: 'ep 2 temp 3 C.H.mp4', muted: true }], autoSlideMs: 3000 }
+                    ]},
+                    4: { name: 'Temporada 4', episodes: [
+                        {
+                            name: 'Ep.1: Visita à Vila de Nazaré',
+                            duration: '23 min',
+                            desc: 'Nesse dia, Janaína nos levou para a Vila de Nazaré, no Cabo de Santo Agostinho. Lá, pudemos aprender sobre a cultura e a história do município, conhecendo suas tradições em uma atividade diferente e enriquecedora.',
+                            mediaSlides: [
+                                { type: 'video', src: 'ep 1 temp 4 C. H (1).mp4', muted: true },
+                                { type: 'video', src: 'ep 1 temp 4 C. H (2).mp4', muted: true },
+                                { type: 'image', src: 'ep 1 temp 4 C.H (3).jpeg' }
+                            ],
+                            thumbPosition: 'center',
+                            thumbSize: 'cover',
+                            autoSlideMs: 3000
+                        },
+                        {
+                            name: 'Ep.2: Eleições para Presidente',
+                            duration: '23 min',
+                            desc: 'Durante semanas, Janaína nos pediu que fizéssemos uma eleição em toda a escola. Apresentamos campanhas, fizemos debates e carreatas, trabalhando em equipe com criatividade e senso crítico para entender como funciona uma eleição.',
+                            mediaSlides: [
+                                { type: 'video', src: 'ep 2 temp 4 C (1).mp4', muted: true },
+                                { type: 'video', src: 'ep 2 temp 4 C (2).mp4', muted: true },
+                                { type: 'video', src: 'ep 2 temp 4 C (3).mp4', muted: true }
+                            ],
+                            thumbPosition: 'center',
+                            thumbSize: 'cover',
+                            autoSlideMs: 3000
+                        }
+                    ]}
+                }
+            },
+            1: {
+                seriesName: 'Demon Slayer',
+                materia: 'Ciências Da Natureza',
+                description: 'Batalhas e técnicas respiratórias em Demon Slayer.',
+                image: 'demonslayer.webp',
+                audioFile: 'ciencias-natureza.mp3',
+                startTime: 31,
+                endTime: 136,
+                volume: 0.3,
+                semestres: {
+                    1: { name: 'Temporada 1', episodes: [
+                        { name: 'Ep.1: Tabela Nutricional', duration: '22 min', desc: 'Nesta pesquisa proposta por Rodrigo, avaliamos no nosso dia a dia o consumo de diferentes alimentos e a quantidade de calorias, carboidratos, açúcares etc. ingeridos. Com isso, podemos ter uma visão melhor de como e quanto devemos consumir.', video: 'Temporada 1 ep 1 Ciencias da Natureza.mp4', videoStart: 42, videoRate: 1.3 },
+                        { name: 'Ep.2: Medição de temperatura', duration: '21 min', desc: 'Nessa aula, Lucas pediu que medíssemos em dupla a mudança de temperatura utilizando um Labdisc, na água morna e fria, vendo como ocorre a percepção de calor em diferentes meios. Isso nos ajuda a ver como a temperatura funciona de maneira lúdica e legal.', video: 'Temporada 1 ep 2 Ciencias da Natureza.mp4', videoStart: 0, videoEnd: 14, videoMuted: true }
+                    ]},
+                    2: { name: 'Temporada 2', episodes: [
+                        { name: 'Ep.1: Balançeamento Químico', duration: '23 min', desc: 'Nesta aula, Rodrigo me pediu para fazer um balanceamento em uma substância azul e na água. Isso me proporcionou uma forma diferente de aprender como equilibrar equações e de absorver o conteúdo.', mediaSlides: [{ type: 'image', src: 'Ep 1 temp 2 Ciencias da Natureza 1.jpeg' }, { type: 'image', src: 'Ep 1 temp 2 Ciencias da Natureza 2.jpeg' }], autoSlideMs: 3000 },
+                        { name: 'Ep.2: OBAFOG', duration: '24 min', desc: 'Na OBAFOG, Lucas nos pediu que criássemos um protótipo de um foguete de bicarbonato e vinagre, envolvendo tanto física quanto química. Nele, pude ver na prática a ação de substâncias, força, gravidade e equilíbrio.', mediaSlides: [{ type: 'image', src: 'Ep 2 temp 2 Ciencias da Natureza-1.jpeg' }, { type: 'image', src: 'Ep 2 temp 2 Ciencias da Natureza-2.jpeg' }], autoSlideMs: 3000 }
+                    ]},
+                    3: { name: 'Temporada 3', episodes: [
+                        { name: 'Ep.1: Desenho do coração', duration: '23 min', desc: 'Nessa atividade, Fernanda nos pediu que fizéssemos uma representação de um coração. Nela, pudemos ver como funciona esse órgão, trabalhando nossas habilidades de desenho e aprendendo o que é cada parte dele.', mediaSlides: [{ type: 'image', src: 'ep 1 temp 3 Ciencias da Natureza.jpeg', position: 'center' }], autoSlideMs: 3000 },
+                        { name: 'Ep.2: Circuito elétrico no Tinkercad', duration: '23 min', desc: 'Neste circuito, Lucas pediu que simulássemos no Tinkercad um semáforo de carro e de pedestres. Assim, pude melhorar meus conhecimentos na produção de um circuito e aprender na prática como funciona um sinal.', mediaSlides: [{ type: 'video', src: 'ep 2 temp 3 Ciencias da Natureza.mp4', muted: true }], autoSlideMs: 3000 }
+                    ]},
+                    4: { name: 'Temporada 4', episodes: [
+                        { name: 'Ep.1: Circuito elétrico de um LED', duration: '23 min', desc: 'Nessa prática, Lucas nos pediu que montássemos um pequeno circuito de funcionamento de alguns LEDs. Eu pude aprender como funciona a eletrônica de maneira divertida, desenvolvendo meus conhecimentos e trabalho em equipe.', mediaSlides: [{ type: 'video', src: 'ep 1 temp 4 Ciencias da Natureza.mp4', muted: true }], autoSlideMs: 3000 },
+                        { name: 'Ep.2: Simulador Químico de decomposição', duration: '23 min', desc: 'Nesse simulador, Rodrigo pediu que fizéssemos um simulador sobre qualquer assunto e eu escolhi a decomposição de uma maçã. Pude ver de maneira lúdica e interativa como a maçã interage com o meio e é decomposta.', mediaSlides: [{ type: 'video', src: 'ep 2 temp 4 Ciências da Natureza.mp4', muted: true }], autoSlideMs: 3000 }
+                    ]}
+                }
+            },
+            2: {
+                seriesName: 'Harriet - O Caminho para a Liberdade',
+                materia: 'Linguagens e Suas Tecnologias',
+                description: 'Uma jornada de coragem e liberdade baseada em uma história inspiradora.',
+                image: 'harriet.jpg',
+                audioFile: 'harriet musica.mpeg',
+                startTime: 137.5,
+                volume: 0.3,
+                semestres: {
+                    1: { name: 'Temporada 1', episodes: [
+                        { name: 'Ep.1: Linking Words', duration: '24 min', desc: 'Nesse seminário, Thaís nos fez entender o uso das linking words nos textos em inglês e como aplicá-las na realidade. Isso me ajudou a entender o assunto e, consequentemente, me ajudará em futuras provas.', thumb: 'Ep 1 temp 1 Linguagens.png', thumbPosition: 'center', thumbSize: 'cover' },
+                        { name: 'Ep.2: O Modernismo No Brasil', duration: '23 min', desc: 'Nessa atividade, Wollace nos pediu que fizéssemos uma redação e um mapa mental sobre o Modernismo no Brasil, o que nos ajudou a entender como era a literatura em período de preconceitos e de estereótipos.', thumb: 'ep 1 temp 1 Linguagens.jpg', thumbPosition: 'center', thumbSize: 'cover' }
+                    ]},
+                    2: { name: 'Temporada 2', episodes: [
+                        { name: 'Ep.1: Mensagem Ao Mundo', duration: '22 min', desc: 'Nessa reflexão, Eudis nos pediu que fizéssemos um pequeno texto sobre: caso pudéssemos mandar uma mensagem a todos do mundo, o que diríamos. Eu refleti sobre a situação em que o nosso mundo vive e como ele precisa ser mudado.', mediaSlides: [{ type: 'image', src: 'Ep 1 temp 2 Linguagens.png' }], autoSlideMs: 3000 },
+                        { name: 'Ep.2: Teatro de Qualidade de Vida', duration: '23 min', desc: 'Nesse teatro, Alexandre nos pediu que fizéssemos uma situação que acontece diariamente em nosso planeta envolvendo a qualidade de vida e como isso impacta nosso globo. Refleti que devo mudar minhas atitudes e ajudar o próximo.', mediaSlides: [{ type: 'video', src: 'Ep 2 temp 2 Linguagens.mp4', muted: true }], autoSlideMs: 3000 }
+                    ]},
+                    3: { name: 'Temporada 3', episodes: [
+                        {
+                            name: 'Ep.1: Resenha Crítica sobre o preconceito',
+                            duration: '23 min',
+                            desc: 'Nessa resenha crítica, Eudis pediu que discutíssemos sobre a obra Preconceito Linguístico, de Marcos Bagno. Nela, pude ver como o preconceito sobre a língua está enraizado em nossa sociedade e desenvolver o senso crítico sobre estigmas.',
+                            mediaSlides: [
+                                { type: 'image', src: 'ep 1 temp 3 Linguagens.jpg' },
+                                { type: 'image', src: 'ep 1 temp 3 Linguagens (2).jpg' }
+                            ],
+                            thumbPosition: 'center',
+                            thumbSize: 'cover',
+                            autoSlideMs: 3000
+                        },
+                        { name: 'Ep.2: Danças e expressões artísticas', duration: '23 min', desc: 'Nessa aula, Eudis passou diferentes formas e expressões de dança, desde Michael Jackson até teatro de sombras. Nela, pude aprender mais sobre as formas de dança e como elas são ricas formas culturais.', mediaSlides: [{ type: 'video', src: 'ep 2 temp 3 Linguagens.mp4', muted: true }], autoSlideMs: 3000 }
+                    ]},
+                    4: { name: 'Temporada 4', episodes: [
+                        { name: 'Ep.1: Investimentos em tecnologias e desenvolvimentos', duration: '23 min', desc: 'Nesta apresentação, Eudis pediu que apresentássemos um gráfico e um infográfico sobre qualquer tema. Ficamos com o tema investimento em tecnologias e desenvolvimento global. Pude aprender mais sobre a economia, o trabalho em equipe e os focos globais.', mediaSlides: [{ type: 'video', src: 'ep 1 temp 4 Linguagens.mp4', muted: true }], autoSlideMs: 3000 },
+                        {
+                            name: 'Ep.2: Interclasse',
+                            duration: '23 min',
+                            desc: 'Nesse campeonato, jogamos e praticamos diversos tipos de modalidades esportivas pela escola toda no decorrer da semana. Pudemos trabalhar a união, o espírito esportivo e o respeito.',
+                            mediaSlides: [
+                                { type: 'video', src: 'ep 2 temp 4 Linguagens (1).mp4', muted: true },
+                                { type: 'image', src: 'ep 2 temp 4 Linguagens (1).jpeg' },
+                                { type: 'image', src: 'ep 2 temp 4 Linguagens (2).jpeg' }
+                            ],
+                            thumbPosition: 'center',
+                            thumbSize: 'cover',
+                            autoSlideMs: 3000
+                        }
+                    ]}
+                }
+            },
+            3: {
+                seriesName: 'Homem-Aranha: Sem Volta para Casa',
+                materia: 'Matemática e Suas Tecnologias',
+                description: 'Homem-Aranha enfrenta desafios que dobram o espaço-tempo.',
+                image: 'Matemática e suas tecnologias.jpg',
+                audioFile: 'matemática.mp3',
+                volume: 0.3,
+                semestres: {
+                    1: { name: 'Temporada 1', episodes: [
+                        {
+                            name: 'Ep.1: Minigames Matemáticos',
+                            duration: '26 min',
+                            desc: 'Nesses jogos, Wellington nos pediu que tentássemos montar diferentes formas geométricas e passar 3 círculos em diferentes aros. Pude testar minha criatividade e, acima de tudo, minha paciência.',
+                            mediaSlides: [
+                                { type: 'image', src: 'ep 1 temp 1 Matematica.jpg' },
+                                { type: 'image', src: 'ep 1 temp 1 Matematica2.jpg' }
+                            ],
+                            thumbPosition: 'center',
+                            thumbSize: 'cover',
+                            autoSlideMs: 3000
+                        },
+                        {
+                            name: 'Ep.2: Quizizz',
+                            duration: '25 min',
+                            desc: 'Neste Quizizz, Wellington nos propôs que respondêssemos diversas perguntas em determinado tempo. Em dupla, pude trabalhar em equipe, reforçar meus conhecimentos, me divertir e trabalhar sob pressão.',
+                            mediaSlides: [
+                                { type: 'image', src: 'ep 2 temp 1 matemática.jpeg', position: 'center 36%' },
+                                { type: 'image', src: 'ep 2 temp 1 matemática2.jpeg', position: 'center 72%' }
+                            ],
+                            thumbPosition: 'center',
+                            thumbSize: 'cover',
+                            autoSlideMs: 3000
+                        }
+                    ]},
+                    2: { name: 'Temporada 2', episodes: [
+                        { name: 'Ep.1: Profissão e Salário', duration: '24 min', desc: 'Nessa pesquisa autoavaliativa, Wellington nos pediu que fizéssemos uma viagem ao futuro, nos imaginando o que faríamos, com o que trabalharíamos, moraríamos e quanto ganharíamos. Eu pude ver como terei que enfrentar diversos obstáculos para alcançar meus objetivos.', mediaSlides: [{ type: 'image', src: 'Ep 1 temp 2 Matemática.png' }], autoSlideMs: 3000 },
+                        { name: 'Ep.2: Produto Coletivo', duration: '26 min', desc: 'Nessa simulação, Wellington nos propôs que fizéssemos um produto ou uma empresa e avaliássemos como é ser empreendedor no mercado. Pude melhorar minhas habilidades de persuasão e criatividade.', mediaSlides: [{ type: 'image', src: 'Ep 2 temp 2 Matematica.png' }], autoSlideMs: 3000 }
+                    ]},
+                    3: { name: 'Temporada 3', episodes: [
+                        {
+                            name: 'Ep.1: Orgulho de Ser SESI',
+                            duration: '23 min',
+                            desc: 'Neste projeto, a escola nos propôs uma apresentação sobre a história do Cabo. Trabalhamos em equipe com criatividade, unindo uma peça teatral e um escape room, aprendendo sobre o passado da cidade de um jeito interativo e divertido.',
+                            mediaSlides: [
+                                { type: 'video', src: 'Orgulho de Ser SESI- Ep 1 temp 3- Humanas (2).mp4', muted: true },
+                                { type: 'video', src: 'Orgulho de Ser SESI- Ep 1 temp 3- Humanas (1).mp4', muted: true },
+                                { type: 'video', src: 'Orgulho de Ser SESI- Ep 1 temp 3- Humanas (3).mp4', muted: true }
+                            ],
+                            thumbPosition: 'center',
+                            thumbSize: 'cover',
+                            autoSlideMs: 3000
+                        },
+                        {
+                            name: 'Ep.2: Projeto dos Triângulos',
+                            duration: '26 min',
+                            desc: 'Nesse trabalho, Wellington passou para que fizéssemos medições de diferentes tipos de triângulos no nosso dia a dia. Pude exercer minhas habilidades de matemática e aprender a importância e a presença dos triângulos no nosso dia a dia.',
+                            mediaSlides: [
+                                { type: 'image', src: 'ep 2 temp 3 Matemática (1).jpeg' },
+                                { type: 'image', src: 'ep 2 temp 3 Matemática (2).jpeg' },
+                                { type: 'image', src: 'ep 2 temp 3 Matemática (3).jpeg' },
+                                { type: 'video', src: 'ep 2 temp 3 Matemática.mp4', muted: true }
+                            ],
+                            thumbPosition: 'center',
+                            thumbSize: 'cover',
+                            autoSlideMs: 3000
+                        }
+                    ]},
+                    4: { name: 'Temporada 4', episodes: [
+                        { name: 'Ep.1: Ficha do Círculo Trigonométrico', duration: '26 min', desc: 'Nessa ficha, o professor nos pediu que fizéssemos essas 40 questões sobre círculo trigonométrico. Essa ficha me ajudou a fixar o assunto, me ajudando a fazer seu teste e o simulado, aprimorando meus conhecimentos.', mediaSlides: [{ type: 'video', src: 'ep 1 temp 4 matemática.mp4', muted: true }], autoSlideMs: 3000 },
+                        { name: 'Ep.2: Pesquisa do Censo em Caruaru', duration: '26 min', desc: 'Nessa atividade, fizemos uma pesquisa no polo de Caruaru sobre questões socioeconômicas e elaboramos um gráfico com os resultados. Pude aprimorar o trabalho em equipe e minha socialização.', mediaSlides: [{ type: 'video', src: 'ep 2 temp 4 Matemática.mp4', muted: true }], autoSlideMs: 3000 }
+                    ]}
+                }
+            },
+            4: {
+                seriesName: 'One Piece',
+                materia: 'Automação Industrial',
+                description: 'One Piece: jornada rumo ao Novo Mundo.',
+                image: 'onepiece.webp',
+                audioFile: 'modulo-industria.mp3',
+                volume: 0.3,
+                semestres: {
+                    1: { name: 'Temporada 1', episodes: [
+                        { name: 'Ep.1: Fontes Hidroelétricas', duration: '23 min', desc: 'Nesse seminário, o professor nos pediu que apresentássemos sobre as usinas hidrelétricas, falando desde a parte da barragem até a energia que chega nas casas, focando no processo. Pude refletir sobre todo o trajeto que a água tem que passar até se tornar energia.', video: 'ep 1 temp 1 Automação Industrial.mp4', videoMuted: true },
+                        {
+                            name: 'Ep.2: Sistemas e Cargas Elétricas',
+                            duration: '24 min',
+                            desc: 'No computador, o professor nos ajudou a montar pequenos sistemas por onde passavam diferentes tipos de cargas e correntes. Isso nos fez entender o assunto e com o que lidaremos no futuro.',
+                            mediaSlides: [
+                                { type: 'image', src: 'ep 2 temp 1 Automação industrial (1).jpeg' },
+                                { type: 'image', src: 'ep 2 temp 1 Automação industrial (2).jpeg' },
+                                { type: 'image', src: 'ep 2 temp 1 Automação industrial (3).jpeg' },
+                                { type: 'image', src: 'ep 2 temp 1 Automação industrial (4).jpeg' }
+                            ],
+                            thumbPosition: 'center',
+                            thumbSize: 'cover',
+                            autoSlideMs: 3000
+                        }
+                    ]},
+                    2: { name: 'Temporada 2', episodes: [
+                        { name: 'Ep.1: Pitch de Vendas e seu Jorge', duration: '23 min', desc: 'Nesse pitch, o orientador pediu que ajudássemos o seu Jorge, um senhor, a resolver seus problemas dentro de uma empresa que está cada vez mais se ajustando ao novo tempo. Pudemos trabalhar a criatividade e refletir sobre a importância de se atualizar.', mediaSlides: [{ type: 'video', src: 'Ep 1 temp 2 Automação Industrial.mp4', muted: true }], autoSlideMs: 3000 },
+                        { name: 'Ep.2: Onshape e Desenhos', duration: '24 min', desc: 'Dentro do Onshape, Luan nos pediu que criássemos diferentes tipos de desenhos técnicos no meio físico e digital, trabalhando a utilização de cotas e a coordenação motora.', mediaSlides: [{ type: 'video', src: 'Ep 2 temp 2 Automação Industrial.mp4', muted: true }], autoSlideMs: 3000 }
+                    ]},
+                    3: { name: 'Temporada 3', episodes: [
+                        { name: 'Ep.1: Atividade de Automação Industrial', duration: '23 min', desc: 'Vídeo da atividade realizada no episódio 1 da 3ª unidade de Automação Industrial.', mediaSlides: [{ type: 'video', src: 'ep 1 temp 3 Automação Industrial.mp4', muted: true }], autoSlideMs: 3000 },
+                        { name: 'Ep.2: Atividade de Automação Industrial', duration: '23 min', desc: 'Vídeo da atividade realizada no episódio 2 da 3ª unidade de Automação Industrial.', mediaSlides: [{ type: 'video', src: 'ep 2 temp 3 Automação Industrial.mp4', muted: true }], autoSlideMs: 3000 }
+                    ]},
+                    4: { name: 'Temporada 4', episodes: [
+                        { name: 'Ep.1: Atividade de Automação Industrial', duration: '23 min', desc: 'Vídeo da atividade realizada no episódio 1 da 4ª unidade de Automação Industrial.', mediaSlides: [{ type: 'video', src: 'ep 1 temp 4 Automação Industrial.mp4', muted: true }], autoSlideMs: 3000 },
+                        { name: 'Ep.2: Atividade de Automação Industrial', duration: '23 min', desc: 'Vídeo da atividade realizada no episódio 2 da 4ª unidade de Automação Industrial.', mediaSlides: [{ type: 'video', src: 'ep 2 temp 4 Automação Industrial.mp4', muted: true }], autoSlideMs: 3000 }
+                    ]}
+                }
+            }
+            ,
+            5: {
+                seriesName: 'Como Treinar o Seu Dragão 2',
+                materia: 'Projeto De Vida',
+                description: 'Trilha voltada para objetivos pessoais, planejamento de carreira e metas de vida.',
+                image: 'comotreinarseudragao.jpg',
+                audioFile: 'Projeto de vida musica.mpeg',
+                startTime: 7.5,
+                volume: 0.3,
+                semestres: {
+                    1: { name: 'Unidade 1', episodes: [
+                        { name: 'Ep.1: Conexões Pessoais', duration: '10 min', desc: 'Nesse seminário, Carlos nos pediu que, em grupo, falássemos um pouco sobre nós mesmos e os nossos planos para o nosso futuro. Através disso, pude me autoavaliar e entender a importância de se conhecer.', video: 'ep 1 temp 1 projeto de vida.mp4', videoMuted: true },
+                        { name: 'Ep.2: Poesia e Música', duration: '12 min', desc: 'Nessa aula, os meninos trouxeram instrumentos, tocando e cantando diversas canções e melodias. Através delas, pude conhecer mais a cultura de meus colegas e suas atividades, além de me divertir bastante.', mediaSlides: [{ type: 'video', src: 'Ep 1 temp 2 Projeto de Vida.mp4', muted: true }], autoSlideMs: 3000 }
+                    ]},
+                    2: { name: 'Unidade 2', episodes: [
+                        { name: 'Ep.1: Estações da Juventude', duration: '14 min', desc: 'Nesse seminário, Carlos nos pediu que colocássemos as nossas emoções e expectativas baseadas em diferentes épocas do ano. Pude refletir como cada estação do ano está interligada aos nossos sentimentos.', mediaSlides: [{ type: 'video', src: 'Ep 2 temp 1 Projeto De Vida.mp4', muted: true }], autoSlideMs: 3000 },
+                        { name: 'Ep.2: Coerência para uma nova realidade', duration: '12 min', desc: 'Nesse seminário, Carlos nos pediu que falássemos um pouco sobre as perspectivas para uma nova realidade, que mesmo sendo difícil no começo, é algo que todos passaremos. Isso me mostrou que devemos ser fortes e nos adaptar a diferentes realidades.', mediaSlides: [{ type: 'video', src: 'Ep 2 temp 2 Projeto de Vida.mp4', muted: true }], autoSlideMs: 3000 }
+                    ]},
+                    3: { name: 'Unidade 3', episodes: [
+                        { name: 'Ep.1: Atividade de Projeto de Vida', duration: '12 min', desc: 'Registro da atividade realizada no episódio 1 da 3ª unidade de Projeto de Vida.', mediaSlides: [{ type: 'image', src: 'ep 1 temp 3 Projeto de Vida.jpg' }], autoSlideMs: 3000 },
+                        { name: 'Ep.2: Atividade de Projeto de Vida', duration: '12 min', desc: 'Registro da atividade realizada no episódio 2 da 3ª unidade de Projeto de Vida.', mediaSlides: [{ type: 'image', src: 'ep 2 temp 3 Projeto de Vida.jpg' }], autoSlideMs: 3000 }
+                    ]},
+                    4: { name: 'Unidade 4', episodes: [
+                        { name: 'Ep.1: Atividade de Projeto de Vida', duration: '12 min', desc: 'Registro da atividade realizada no episódio 1 da 4ª unidade de Projeto de Vida.', mediaSlides: [{ type: 'image', src: 'ep 1 temp 4 Projeto de Vida.jpg' }], autoSlideMs: 3000 },
+                        { name: 'Ep.2: Atividade de Projeto de Vida', duration: '12 min', desc: 'Vídeo da atividade realizada no episódio 2 da 4ª unidade de Projeto de Vida.', mediaSlides: [{ type: 'video', src: 'ep 2 temp 4 Projeto de Vida.mp4', muted: true }], autoSlideMs: 3000 }
+                    ]}
+                }
+            }
+        };
+
+        function qs(name) {
+            const params = new URLSearchParams(window.location.search);
+            return params.get(name);
+        }
+
+        function obterDadosSerie(id, data) {
+            if (localStorage.getItem('portfolio-aplicativo') !== 'disney') return data;
+
+            const disneySeries = {
+                hero: { seriesName: 'Sobre Mim', materia: 'Sobre Mim', image: 'Sobre mim-Disney.jpg' },
+                0: { seriesName: 'Capitão América: Guerra Civil', materia: 'Ciências Humanas', image: 'Ciencias Humanas-Disney.jpg' },
+                1: { seriesName: 'Homem de Ferro 2', materia: 'Ciências Da Natureza', image: 'Ciencias da Natureza- Disney.png' },
+                2: { seriesName: 'WandaVision', materia: 'Linguagens e Suas Tecnologias', image: 'Linguagens- Disney.webp' },
+                3: { seriesName: 'Homem-Aranha: Sem Volta para Casa', materia: 'Matemática e Suas Tecnologias', image: 'Matemática-Disney.jpg' },
+                4: { seriesName: 'Vingadores: Era Ultron', materia: 'Módulo da Indústria', image: 'Módulo da Industria-Disney.webp' },
+                5: { seriesName: 'Eu Sou Groot', materia: 'Projeto De Vida', image: 'Projeto de Vida-Disney.jpeg' }
+            };
+
+            return disneySeries[id] ? { ...data, ...disneySeries[id] } : data;
+        }
+
+        function trocarSemestre(semestre) {
+            semestreAtual = semestre;
+            document.querySelectorAll('.semester-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', unidadesDoSemestre[idx] === semestre);
+            });
+            renderEpisodios();
+        }
+
+        function configurarUnidades() {
+            const selector = document.getElementById('semester-selector');
+            if (!selector) return;
+
+            selector.innerHTML = unidadesDoSemestre.map((unidade, index) => `
+                <button class="semester-btn${index === 0 ? ' active' : ''}" onclick="trocarSemestre(${unidade})">
+                    ${unidade}° Unidade
+                </button>
+            `).join('');
+            semestreAtual = unidadesDoSemestre[0];
+        }
+
+        function renderEpisodios() {
+            const container = document.getElementById('episodiosContainer');
+            const idParam = qs('id');
+            const data = serieAtual;
+            
+            if (idParam === 'hero' || !data.semestres) {
+                const aboutImages = ['Carrosel do Sobre mim 1.jpeg', 'Carrosel do Sobre mim 2.jpeg', 'Carrosel do Sobre mim 3.jpeg', 'Carrosel do Sobre mim 4.jpeg', 'Carrosel do Sobre mim 5.jpeg'];
+                const miniImages = ['Sobre mim carrossel 2.jpeg', 'Sobre mim carrossel 3.jpeg', 'Sobre mim carrossel 4.jpeg', 'Sobre mim carrossel 5.jpeg', 'Sobre mim carrossel 6.jpeg', 'Sobre mim carrossel 7.jpeg'];
+                window.aboutImages = aboutImages;
+                window.miniImages = miniImages;
+                window.aboutImageIndex = 0;
+                window.miniImageIndex = 0;
+                container.innerHTML = `
+                    <section class="about-content about-full-content">
+                        <h3>Sobre Mim</h3>
+                        <div class="about-layout">
+                            <div>
+                                <div class="about-carousel-side">
+                                    <img id="about-main-image" src="${aboutImages[0]}" alt="Galeria sobre mim" />
+                                    <button class="about-arrow prev" onclick="changeAboutImage(-1)">❮</button>
+                                    <button class="about-arrow next" onclick="changeAboutImage(1)">❯</button>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="about-bio">Meu nome é João Eduardo, tenho 16 anos. Estudo no SESI, no 2º Ano, e sou uma pessoa que gosta bastante de conhecer novos ambientes e pessoas. Gosto de praticar esportes, resolver equações matemáticas, observar astros e a natureza, brincar com meus animais, ajudar o próximo e viajar, entre outras coisas. Minhas atividades favoritas são andar de bicicleta, cantar e conversar.</p>
+                            </div>
+                        </div>
+                        <div class="about-bottom-layout">
+                            <div class="about-bottom-info">
+                                <div class="about-controls">
+                                    <button class="about-toggle" onclick="toggleAboutList('about-qualities', this)">Qualidades ▾</button>
+                                    <button class="about-toggle" onclick="toggleAboutList('about-achievements', this)">Conquistas ▾</button>
+                                    <button class="about-toggle" onclick="toggleAboutList('about-goals', this)">Metas ▾</button>
+                                </div>
+                                <ul id="about-qualities" class="about-list"><li>Observador</li><li>Curioso</li><li>Alegre</li><li>Altruísta</li></ul>
+                                <ul id="about-achievements" class="about-list"><li>Bolsa do SESI</li><li>2ª fase da OBMEP (2022)</li><li>2º lugar em olimpíada interna de matemática (2024)</li><li>2ª fase da OBB (2025)</li><li>63.45 no SSA 1 (2025)</li><li>Leitura completa da Bíblia</li></ul>
+                                <ul id="about-goals" class="about-list"><li>Passar de ano com êxito</li><li>Conseguir uma boa nota no SSA 2</li><li>Conquistar uma boa nota no ENEM</li><li>Me aproximar mais de Jesus e amar o próximo</li><li>Cursar uma faculdade ligada às Ciências da Natureza</li><li>Dar orgulho à minha família</li><li>Ler a Bíblia pela 2ª vez este ano</li></ul>
+                            </div>
+                            <div class="about-mini-slide">
+                                <img id="about-mini-image" src="${miniImages[0]}" alt="Mini galeria sobre mim" />
+                                <button class="about-arrow prev" onclick="changeMiniImage(-1)">❮</button>
+                                <button class="about-arrow next" onclick="changeMiniImage(1)">❯</button>
+                            </div>
+                        </div>
+                    </section>
+                `;
+                return;
+            }
+
+            const season = data.semestres[semestreAtual] || data.semestres[semestreAtual - 2];
+            if (!season) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = `
+                <h3>Unidade ${semestreAtual}</h3>
+                <ul class="episodes">
+                    ${season.episodes.map(ep => {
+                        if (ep.video) {
+                            return `
+                        <li>
+                            <div class="ep-thumbnail">
+                                <video class="ep-video" src="${ep.video}" data-start="${ep.videoStart || 0}" data-end="${ep.videoEnd || ''}" data-rate="${ep.videoRate || 1}" data-muted="${ep.videoMuted === false ? 'false' : 'true'}" muted autoplay playsinline preload="metadata"></video>
+                            </div>
+                            <div class="ep-content">
+                                <div class="ep-header">
+                                    <span class="ep-title">${ep.name}</span>
+                                </div>
+                                <div class="ep-desc">${ep.desc || 'Sem descrição disponível.'}</div>
+                            </div>
+                        </li>
+                            `;
+                        }
+
+                        if (Array.isArray(ep.mediaSlides) && ep.mediaSlides.length > 0) {
+                            const thumbPosition = ep.thumbPosition || 'center';
+                            const thumbSize = ep.thumbSize || 'cover';
+                            const interval = ep.autoSlideMs || 2000;
+                            return `
+                        <li>
+                            <div class="ep-thumbnail">
+                                <div class="ep-carousel" data-interval="${interval}">
+                                    ${ep.mediaSlides.map((item, i) => {
+                                        if (item.type === 'video') {
+                                            return `<div class="ep-slide ${i === 0 ? 'active' : ''}"><video src="${item.src}" data-rate="${item.rate || 1}" ${item.muted === false ? '' : 'muted'} ${i === 0 ? 'autoplay' : ''} playsinline preload="auto"></video></div>`;
+                                        }
+                                        const itemPosition = item.position || thumbPosition;
+                                        const rotateLeft = item.rotateLeft || item.src === 'ep 1 temp 3 Ciencias da Natureza.jpeg' ? ' rotate-left' : '';
+                                        return `<div class="ep-slide ${i === 0 ? 'active' : ''}${rotateLeft}" style="background-image: url('${item.src}'); background-size: ${thumbSize}; background-position: ${itemPosition};"></div>`;
+                                    }).join('')}
+                                    ${ep.mediaSlides.length > 1 ? `<button class="ep-arrow prev" onclick="event.stopPropagation(); changeEpSlide(this, -1);">&#10094;</button>
+                                    <button class="ep-arrow next" onclick="event.stopPropagation(); changeEpSlide(this, 1);">&#10095;</button>` : ''}
+                                </div>
+                            </div>
+                            <div class="ep-content">
+                                <div class="ep-header">
+                                    <span class="ep-title">${ep.name}</span>
+                                </div>
+                                <div class="ep-desc">${ep.desc || 'Sem descrição disponível.'}</div>
+                            </div>
+                        </li>
+                            `;
+                        }
+
+                        if (Array.isArray(ep.thumbs) && ep.thumbs.length > 0) {
+                            const thumbPosition = ep.thumbPosition || 'center';
+                            const thumbSize = ep.thumbSize || 'cover';
+                            const interval = ep.autoSlideMs || 2000;
+                            return `
+                        <li>
+                            <div class="ep-thumbnail">
+                                <div class="ep-carousel" data-interval="${interval}">
+                                    ${ep.thumbs.map((img, i) => `<div class="ep-slide ${i === 0 ? 'active' : ''}" style="background-image: url('${img}'); background-size: ${thumbSize}; background-position: ${thumbPosition};"></div>`).join('')}
+                                    ${ep.thumbs.length > 1 ? `<button class="ep-arrow prev" onclick="event.stopPropagation(); changeEpSlide(this, -1);">&#10094;</button>
+                                    <button class="ep-arrow next" onclick="event.stopPropagation(); changeEpSlide(this, 1);">&#10095;</button>` : ''}
+                                </div>
+                            </div>
+                            <div class="ep-content">
+                                <div class="ep-header">
+                                    <span class="ep-title">${ep.name}</span>
+                                </div>
+                                <div class="ep-desc">${ep.desc || 'Sem descrição disponível.'}</div>
+                            </div>
+                        </li>
+                            `;
+                        }
+
+                        const thumbSrc = ep.thumb || data.image || '';
+                        const thumbPosition = ep.thumbPosition || 'center';
+                        const thumbSize = ep.thumbSize || 'cover';
+                        return `
+                        <li>
+                            <div class="ep-thumbnail" style="${thumbSrc ? `background-color: #2f2f2f; background-image: url('${thumbSrc}'); background-size: ${thumbSize}; background-position: ${thumbPosition}; background-repeat: no-repeat;` : 'background: #2f2f2f;'}"></div>
+                            <div class="ep-content">
+                                <div class="ep-header">
+                                    <span class="ep-title">${ep.name}</span>
+                                </div>
+                                <div class="ep-desc">${ep.desc || 'Sem descrição disponível.'}</div>
+                            </div>
+                        </li>
+                        `;
+                    }).join('')}
+                </ul>
+            `;
+
+            initEpisodeVideos(container);
+            initEpisodeCarousels(container);
+        }
+
+        function changeEpSlide(btn, direction) {
+            const carousel = btn.closest('.ep-carousel');
+            if (!carousel) return;
+
+            const slides = carousel.querySelectorAll('.ep-slide');
+            if (!slides.length) return;
+
+            let current = Number(carousel.dataset.current || 0);
+            current = (current + direction + slides.length) % slides.length;
+
+            activateCarouselSlide(carousel, current);
+        }
+
+        function activateCarouselSlide(carousel, index) {
+            const slides = carousel.querySelectorAll('.ep-slide');
+            if (!slides.length) return;
+
+            slides.forEach((slide, idx) => {
+                const isActive = idx === index;
+                slide.classList.toggle('active', isActive);
+
+                const vid = slide.querySelector('video');
+                if (vid) {
+                    if (isActive) {
+                        vid.muted = true;
+                        vid.volume = 0;
+                        vid.playsInline = true;
+                        const startVideo = () => {
+                            vid.play().catch(() => {
+                                vid.addEventListener('canplay', () => vid.play().catch(() => {}), { once: true });
+                            });
+                        };
+                        if (vid.readyState >= 2) {
+                            startVideo();
+                        } else {
+                            vid.addEventListener('canplay', startVideo, { once: true });
+                        }
+                    } else {
+                        vid.pause();
+                    }
+                }
+            });
+
+            carousel.dataset.current = String(index);
+            scheduleCarouselAdvance(carousel);
+        }
+
+        function scheduleCarouselAdvance(carousel) {
+            const slides = carousel.querySelectorAll('.ep-slide');
+            if (!slides.length) return;
+
+            const current = Number(carousel.dataset.current || 0);
+            const activeSlide = slides[current];
+            if (!activeSlide) return;
+
+            if (!window.__epCarouselTimers) {
+                window.__epCarouselTimers = [];
+            }
+
+            const prevTimer = Number(carousel.dataset.timerId || 0);
+            if (prevTimer) {
+                clearTimeout(prevTimer);
+            }
+
+            const activeVideo = activeSlide.querySelector('video');
+            if (activeVideo) {
+                const rate = Number(activeVideo.dataset.rate || 1);
+                activeVideo.muted = true;
+                activeVideo.volume = 0;
+                if (!Number.isNaN(rate) && rate > 0) {
+                    activeVideo.playbackRate = rate;
+                }
+
+                const goNext = () => {
+                    const next = (Number(carousel.dataset.current || 0) + 1) % slides.length;
+                    activateCarouselSlide(carousel, next);
+                };
+
+                activeVideo.currentTime = 0;
+                activeVideo.play().catch(() => {});
+                activeVideo.onended = goNext;
+                return;
+            }
+
+            const interval = Number(carousel.dataset.interval || 3000);
+            const timerId = setTimeout(() => {
+                const next = (Number(carousel.dataset.current || 0) + 1) % slides.length;
+                activateCarouselSlide(carousel, next);
+            }, interval);
+
+            carousel.dataset.timerId = String(timerId);
+        }
+
+        function initEpisodeCarousels(scope) {
+            const root = scope || document;
+            const carousels = root.querySelectorAll('.ep-carousel');
+
+            carousels.forEach((carousel) => {
+                const slides = carousel.querySelectorAll('.ep-slide');
+                const hasSingleVideo = slides.length === 1 && slides[0].querySelector('video');
+                if (slides.length <= 1 && !hasSingleVideo) return;
+
+                carousel.dataset.current = '0';
+                activateCarouselSlide(carousel, 0);
+            });
+        }
+
+        function initEpisodeVideos(scope) {
+            const root = scope || document;
+            const videos = root.querySelectorAll('.ep-video');
+
+            videos.forEach((video) => {
+                const start = Number(video.dataset.start || 0);
+                const end = Number(video.dataset.end || 0);
+                const rate = Number(video.dataset.rate || 1);
+                const muted = video.dataset.muted !== 'false';
+
+                const setStart = () => {
+                    if (!Number.isNaN(start) && start > 0) {
+                        try {
+                            video.currentTime = start;
+                        } catch (e) {
+                            // Ignora falhas temporarias de seek antes do metadata
+                        }
+                    }
+                };
+
+                const playVideo = () => {
+                    video.muted = muted;
+                    if (muted) {
+                        video.volume = 0;
+                    }
+                    if (!Number.isNaN(rate) && rate > 0) {
+                        video.playbackRate = rate;
+                    }
+                    video.play().catch(() => {});
+                };
+
+                video.addEventListener('timeupdate', () => {
+                    if (!Number.isNaN(end) && end > 0 && video.currentTime >= end) {
+                        video.currentTime = start > 0 ? start : 0;
+                        playVideo();
+                    }
+                });
+
+                video.addEventListener('loadedmetadata', () => {
+                    setStart();
+                    playVideo();
+                });
+
+                video.addEventListener('ended', () => {
+                    setStart();
+                    playVideo();
+                });
+
+                if (video.readyState >= 1) {
+                    setStart();
+                    playVideo();
+                }
+            });
+        }
+
+        function renderPage() {
+            const idParam = qs('id');
+            document.body.classList.toggle('theme-disney', localStorage.getItem('portfolio-aplicativo') === 'disney');
+            const data = obterDadosSerie(idParam, seriesData[idParam]);
+            if (!data) {
+                document.body.innerHTML = '<p>Conteúdo não encontrado.</p>'; 
+                return;
+            }
+
+            serieAtual = data;
+
+            // Definir background
+            const backdrop = document.getElementById('backdrop');
+            backdrop.style.backgroundImage = `url('${data.image}')`;
+
+            // Preencher dados
+            document.getElementById('materiaDisplay').textContent = data.materia;
+            document.getElementById('titleDisplay').textContent = data.seriesName;
+            const poster = document.getElementById('seriesPoster');
+            poster.src = data.image;
+            poster.alt = data.seriesName;
+
+            poster.style.objectFit = 'cover';
+            poster.style.transform = 'none';
+            
+            // Aplicar filtro se existir
+            if (data.filter) {
+                poster.style.filter = data.filter;
+                backdrop.style.filter = data.filter;
+            } else {
+                poster.style.filter = 'none';
+                backdrop.style.filter = 'none';
+            }
+
+            // Mostrar seletor de semestre apenas para séries (não para hero)
+            const selector = document.getElementById('semester-selector');
+            if (idParam !== 'hero' && data.semestres) {
+                selector.style.display = 'flex';
+                configurarUnidades();
+            } else {
+                selector.style.display = 'none';
+            }
+
+            // Tocar áudio da matéria
+            const audio = document.getElementById('serieAudio');
+            if (data.audioFile) {
+                audio.src = data.audioFile;
+                audio.loop = false;
+                const baseVolume = data.volume || 0.3;
+                audio.volume = baseVolume;
+                
+                // Remover listeners anteriores
+                audio.ontimeupdate = null;
+                audio.onended = null;
+                
+                // Se tiver startTime definido, aguardar o áudio carregar antes de definir
+                if (data.startTime !== undefined) {
+                    audio.addEventListener('canplay', function setStartTime() {
+                        audio.currentTime = data.startTime;
+                        audio.removeEventListener('canplay', setStartTime);
+                    }, { once: true });
+                }
+                
+                // Se tiver endTime definido, verificar quando chegar lá
+                if (data.endTime !== undefined) {
+                    const fadeDuration = data.fadeTransition ? (data.fadeDuration || 0.5) : 0;
+                    
+                    audio.ontimeupdate = function() {
+                        const timeLeft = data.endTime - audio.currentTime;
+                        
+                        // Fade out perto do fim
+                        if (data.fadeTransition && timeLeft <= fadeDuration && timeLeft > 0) {
+                            audio.volume = baseVolume * (timeLeft / fadeDuration);
+                        } 
+                        // Fade in no início
+                        else if (data.fadeTransition && audio.currentTime - (data.startTime || 0) <= fadeDuration) {
+                            const timeFromStart = audio.currentTime - (data.startTime || 0);
+                            audio.volume = baseVolume * (timeFromStart / fadeDuration);
+                        }
+                        // Volume normal
+                        else {
+                            audio.volume = baseVolume;
+                        }
+                        
+                        // Reiniciar quando chegar no fim
+                        if (audio.currentTime >= data.endTime) {
+                            audio.currentTime = data.startTime || 0;
+                        }
+                    };
+                } else {
+                    // Se não tiver endTime e houver startTime, reiniciar sempre do startTime
+                    if (data.startTime !== undefined) {
+                        audio.onended = function() {
+                            audio.currentTime = data.startTime;
+                            audio.play().catch(() => {});
+                        };
+                    } else {
+                        // Sem startTime específico, loop normal
+                        audio.loop = true;
+                    }
+                }
+                
+                audio.play().catch(err => console.log('Áudio não pôde ser reproduzido:', err));
+            } else {
+                audio.pause();
+                audio.src = '';
+                audio.ontimeupdate = null;
+                audio.onended = null;
+            }
+
+            renderEpisodios();
+        }
+
+        // Parar áudio ao retornar para página anterior
+        window.addEventListener('beforeunload', function() {
+            const audio = document.getElementById('serieAudio');
+            if (audio) {
+                audio.pause();
+                audio.src = '';
+            }
+        });
+
+        function changeAboutImage(direction) {
+            if (!window.aboutImages || !window.aboutImages.length) return;
+            window.aboutImageIndex = (window.aboutImageIndex + direction + window.aboutImages.length) % window.aboutImages.length;
+            document.getElementById('about-main-image').src = window.aboutImages[window.aboutImageIndex];
+        }
+
+        function changeMiniImage(direction) {
+            if (!window.miniImages || !window.miniImages.length) return;
+            window.miniImageIndex = (window.miniImageIndex + direction + window.miniImages.length) % window.miniImages.length;
+            document.getElementById('about-mini-image').src = window.miniImages[window.miniImageIndex];
+        }
+
+        function toggleAboutList(id, button) {
+            document.querySelectorAll('.about-list').forEach((list) => {
+                if (list.id !== id) list.classList.remove('visible');
+            });
+            document.querySelectorAll('.about-toggle').forEach((item) => {
+                if (item !== button) item.classList.remove('active');
+            });
+            const list = document.getElementById(id);
+            const isVisible = list.classList.toggle('visible');
+            button.classList.toggle('active', isVisible);
+            button.textContent = `${button.textContent.replace(/ ▾| ▴/g, '')} ${isVisible ? '▴' : '▾'}`;
+        }
+
+        renderPage();
+    </script>
+</body>
+</html>
